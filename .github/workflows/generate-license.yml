@@ -1,0 +1,87 @@
+
+name: Generate License
+
+on:
+  workflow_dispatch:
+    inputs:
+      LICENSE_NAME:
+        description: "License for name"
+        required: true
+        type: string
+        default: "Tim Cook"
+
+      LICENSE_COMPANY:
+        description: "License for company"
+        required: true
+        type: string
+        default: "App Computer, Inc."
+
+      LICENSE_EMAIL:
+        description: "License for email"
+        required: true
+        type: string
+        default: "tcook@apple.com"
+
+      LICENSE_PLAN:
+        description: "gitlab plan"
+        required: true
+        type: string
+        default: "ultimate"
+
+      LICENSE_USER_COUNT:
+        description: "user conut number"
+        required: true
+        type: string
+        default: "2147483647"
+
+      LICENSE_EXPIRE_YEAR:
+        description: "expire year"
+        required: true
+        type: string
+        default: "2500"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            ruby \
+            ruby-dev \
+            make
+
+      - name: Run build
+        shell: bash
+        env:
+          LICENSE_NAME: ${{ inputs.LICENSE_NAME }}
+          LICENSE_COMPANY: ${{ inputs.LICENSE_COMPANY }}
+          LICENSE_EMAIL: ${{ inputs.LICENSE_EMAIL }}
+          LICENSE_PLAN: ${{ inputs.LICENSE_PLAN }}
+          LICENSE_USER_COUNT: ${{ inputs.LICENSE_USER_COUNT }}
+          LICENSE_EXPIRE_YEAR: ${{ inputs.LICENSE_EXPIRE_YEAR }}
+        run: |
+          set -euo pipefail
+          chmod +x src/scan.features.rb
+          chmod +x ./make.sh
+          ./make.sh
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: |
+            dist/
+            build/
+          if-no-files-found: warn
+          retention-days: 7
